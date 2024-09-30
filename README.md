@@ -7,10 +7,9 @@ This repository contains the code for the 2024 Bucknell Chem-E-Car Control Syste
 ## Getting Started
 To get started with the Control System Code, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/your-username/chemecar2024.git`
-2. Open the `chemecar2024.ino` file in your Arduino IDE.
-3. Connect your Arduino board to your computer.
-4. Upload the code to your Arduino board.
+1. Set up a PlatformIO capable IDE (we recommend using Cursor with the PlatformIO extension)
+2. Install the necessary libraries
+3. Upload the code to your Arduino board
 
 ## Usage
 The `chemecar2024.ino` file contains the main code for the Control System. It includes the necessary functions and logic to control the car's movements and perform the required tasks. You can modify the code to customize the behavior of the car or add new features.
