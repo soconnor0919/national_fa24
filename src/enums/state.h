@@ -4,6 +4,7 @@
 enum state {
     NOT_READY,
     READY,
+    VENTING,
     RUNNING,
     DONE
 };

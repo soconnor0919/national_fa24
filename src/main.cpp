@@ -2,7 +2,7 @@
  * BUCKNELL CHEM-E-CAR TEAM PRESENTS:
  * 2024 Control System Code
  * 
- * This code is designed to run on an Adafruit Metro Mini microcontroller.
+ * This code is designed to run on an Arduino Uno R4 Minima microcontroller.
  * It is responsible for controlling the motor based off of reading 
  * spectrometer sensor values.
  * 
@@ -48,6 +48,7 @@
  * VERBOSE_MODE: false
  * MOTOR_ACTIVE: true
  * PUMP_ACTIVE: true
+ * VALVE_ACTIVE: true
  * LED_ACTIVE: true
  * DEMO_MODE: false
  */
@@ -55,6 +56,7 @@ bool CALIBRATION_MODE = true;
 bool VERBOSE_MODE = true;
 bool MOTOR_ACTIVE = true;
 bool PUMP_ACTIVE = true;
+bool VALVE_ACTIVE = true;
 bool LED_ACTIVE = true;
 bool DEMO_MODE = false;
 
@@ -76,6 +78,7 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     pinMode(PUMP_PIN, OUTPUT);
     pinMode(MOTOR_PIN, OUTPUT);
+    pinMode(VALVE_PIN, OUTPUT);
 
     // Set actuators to off
     digitalWrite(PUMP_PIN, LOW);
@@ -93,22 +96,20 @@ void setup() {
 
     Serial.println("Initializing spectrometer sensor...");
     // Wait for communication with the spectrometer sensor
-    if (!as7341.begin()) {
-        // setLEDColor(Color::BLUE);
-        // Sensor not found. Check connections, and wait to try again.
+    delay(3);
+
+    while (!as7341.begin()) {
         Serial.println("Could not find spectrometer sensor. Check your connections.");
-        while (1) {
-            setLEDColor(Color::RED);
-            delay(500);
-            setLEDColor(Color::BLACK);
-            delay(500);
-        }
-    } else {
-        Serial.println("Spectrometer sensor initialized.");
-        colorWipe(Color::BLUE, 50);
-        colorWipe(Color::ORANGE, 50);
-        setLEDColor(Color::GREEN);
+        setLEDColor(Color::RED);
+        delay(500);
+        setLEDColor(Color::BLACK);
+        delay(500);
     }
+    
+    Serial.println("Spectrometer sensor initialized.");
+    colorWipe(Color::BLUE, 50);
+    colorWipe(Color::ORANGE, 50);
+    setLEDColor(Color::GREEN);
 
     // Configure spectrometer sensor
     as7341.setATIME(100);
@@ -150,7 +151,11 @@ void loop() {
         // System is waiting for activation threshold
         if (VERBOSE_MODE) { printData(); }
         if (as7341.getChannel(AS7341_CHANNEL_480nm_F3) >= START_THRESHOLD) {
-            SYS_STATE = RUNNING;
+            if (VALVE_ACTIVE) {
+                SYS_STATE = VENTING;
+            } else {
+                SYS_STATE = RUNNING;
+            }
             // Print calibration message if in calibration mode, initialize reactionDuration
             if (CALIBRATION_MODE) {
                 Serial.println("Starting calibration measurement.");
@@ -161,6 +166,13 @@ void loop() {
             // Turn on the motor
             if (MOTOR_ACTIVE) { digitalWrite(MOTOR_PIN, HIGH); }
         }
+        break;
+    case VENTING:
+        // System is venting the fuel cell
+        digitalWrite(VALVE_PIN, HIGH);
+        delay(500);
+        digitalWrite(VALVE_PIN, LOW);
+        SYS_STATE = RUNNING;
         break;
     case RUNNING:
         // System is currently running the reaction
